@@ -1,0 +1,41 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.27"
+
+      - name: Проверка форматирования
+        run: test -z "$(gofmt -l .)"
+
+      - run: go vet ./...
+
+      - name: Тесты
+        run: go test ./... -race -count=1 -coverprofile=coverage.out
+
+      - name: Покрытие
+        run: go tool cover -func=coverage.out | tail -1
+
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-go@v6
+        with:
+          go-version: "1.27"
+
+      # v8 работает с golangci-lint v2, под который написан .golangci.yml
+      - uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
